@@ -5,7 +5,8 @@ CREATE TABLE Positions
 (
 	position_id INT PRIMARY KEY,
 	name VARCHAR(50) NOT NULL,
-	min_salary SMALLMONEY
+	min_salary SMALLMONEY,
+	max_salary SMALLMONEY
 )
 GO
 
@@ -59,7 +60,8 @@ GO
 CREATE TABLE BookCategory
 (
 	book_category_id INT PRIMARY KEY,
-	name VARCHAR(40) NOT NULL
+	name VARCHAR(40) NOT NULL,
+	price SMALLMONEY NOT NULL
 )
 GO
 --książki--
@@ -81,7 +83,7 @@ GO
 --dostawy książek--
 CREATE TABLE BooksDelivery
 (
-	book_deliver_id INT PRIMARY KEY,
+	book_deliver_id INT IDENTITY(1,1) PRIMARY KEY,
 	quantity INT NOT NULL,
 	description VARCHAR(100),
 	delivery_date SMALLDATETIME NOT NULL,
@@ -97,7 +99,7 @@ GO
 --historia pensji pracowników--
 CREATE TABLE SalaryHistory
 (
-	salary_history_id INT PRIMARY KEY,
+	salary_history_id INT IDENTITY(1,1) PRIMARY KEY,
 	salary SMALLMONEY,
 	date DATETIME,
 	employee INT NOT NULL,

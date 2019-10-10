@@ -2,10 +2,10 @@ USE db_RMSBD
 GO
 
 INSERT INTO Positions VALUES
-	(1, 'Dyrektor', 5000),
-	(2, 'Pracownik', 2000),
-	(3, 'Dostawca', 3000),
-	(4, 'Ochroniaż', 2500);
+	(1, 'Dyrektor', 5000, 7000),
+	(2, 'Pracownik', 2000, 4000),
+	(3, 'Dostawca', 3000, 5000),
+	(4, 'Ochroniaż', 2500, 4500);
 
 INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, position, department) VALUES
 	(1, 'Marcin', 'Wachulski', 5200, 'Piotrkowska', '210', '18', 'Gliwice', '94-021', 1, 1),
@@ -20,8 +20,8 @@ INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, stre
 	(10, 'Elmund', 'Telarid', 3100, 'Durden', '91', '2', 'Zakopane', '96-710', 3, 3),
 	(11, 'Karolina', 'Jamnik', 3200, 'Lipiec', '62', '29', 'Mosin', '90-765', 3, 3),
 	(12, 'Sebastian', 'Irys', 2550, 'Warszawska', '164', '84', 'Lepody', '93-123', 4, 1),
-	(13, 'Bogdan', 'Popel', 2600, 'Konieczna', '75', '73', 'Rusiec', '96-925', 4, 2),
-	(14, 'Katarzyna', 'Silna', 2700, 'Smutna', '36', '42', 'Gliwice', '99-821', 4, 3),
+	(13, 'Bogdan', 'Popel', 5500, 'Konieczna', '75', '73', 'Rusiec', '96-925', 4, 3),
+	(14, 'Katarzyna', 'Silna', 3300, 'Smutna', '36', '42', 'Gliwice', '99-821', 4, 3),
 	(15, 'Hanna', 'Widawka', 2600, 'Wesola', '352', '12', 'Torun', '99-951', 4, 3);
 
 INSERT INTO DepartmentCategory VALUES
@@ -34,11 +34,11 @@ INSERT INTO Department VALUES
 	(3, 'Magazyn ksiazek im. Jana Przechowywacza', 3, 1);
 
 INSERT INTO BookCategory VALUES
-	(1, 'fantastyka'),
-	(2, 'horror'),
-	(3, 'klasyka'),
-	(4, 'powiesc historyczna'),
-	(5, 'biografia');
+	(1, 'fantastyka', 15),
+	(2, 'horror', 20),
+	(3, 'klasyka', 17),
+	(4, 'powiesc historyczna', 25),
+	(5, 'biografia', 30);
 
 INSERT INTO Books VALUES
 	(1, 10, 'Dwa Miecze', 'Andrzej Sapkowski', 1, 1),
@@ -57,12 +57,12 @@ INSERT INTO Books VALUES
 	(14, 8, 'Król', 'Szczepan Twardoch', 4, 3),
 	(15, 20, 'Pianista', 'Wladyslaw Szpilman', 5, 3);
 
-INSERT INTO BooksDelivery(book_deliver_id, quantity, delivery_date, price, book, department) VALUES
-	(1, 5, '2019-10-10 12:00:00', 500, 15, 2),
-	(2, 3, '2019-09-12 14:00:00', 300, 14, 1),
-	(3, 2, '2019-08-20 18:00:00', 500, 13, 2),
-	(4, 10, '2019-11-11 08:00:00', 500, 12, 2),
-	(5, 7, '2019-05-05 12:30:00', 500, 11, 1);
+INSERT INTO BooksDelivery(quantity, delivery_date, price, book, department) VALUES
+	(5, '2019-10-10 12:00:00', 500, 15, 2),
+	(3, '2019-09-12 14:00:00', 300, 14, 1),
+	(2, '2019-08-20 18:00:00', 500, 13, 2),
+	(10, '2019-11-11 08:00:00', 500, 12, 2),
+	(7, '2019-05-05 12:30:00', 500, 11, 1);
 
 	SELECT * FROM Positions;
 	SELECT * FROM Employees;
