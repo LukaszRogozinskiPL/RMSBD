@@ -1,4 +1,8 @@
-IF EXISTS(SELECT 1 FROM sys.objects WHERE TYPE='F' AND NAME = 'checkSalary') DROP FUNCTION checkSalary
+IF EXISTS ( SELECT	1 
+			FROM	sys.objects 
+			WHERE	object_id = OBJECT_ID(N'dbo.checkSalary')
+					AND type IN ( N'FN', N'IF', N'TF', N'FS', N'FT' ) )
+DROP FUNCTION dbo.checkSalary
 GO
 CREATE FUNCTION checkSalary(@id INT)
 RETURNS BIT AS
@@ -20,7 +24,11 @@ GO
 
 --SELECT dbo.checkSalary(2)
 
-IF EXISTS(SELECT 1 FROM sys.objects WHERE TYPE='P' AND NAME = 'orderBookDelivery') DROP PROCEDURE orderBookDelivery
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'dbo.orderBookDelivery')
+                    AND type IN ( N'P', N'PC' ) )
+DROP PROCEDURE dbo.orderBookDelivery
 GO
 CREATE PROCEDURE orderBookDelivery(@sender INT, @receiver INT, @book INT, @number_of_books INT)
 AS
@@ -35,7 +43,7 @@ BEGIN
 				THROW 60000, 'not enough ammount of books', 1
 			END
 			BEGIN
-				INSERT INTO BooksDelivery(quantity, delivery_date, price, book, department)
+				INSERT INTO BooksDelivery(quantity, delivery_date, price, book, department) -- mozliwy do dodania trigger ktory sprawdzi date delivery_date i o tej porze doda odpowiednia krotke do tabeli books
 				VALUES(
 					@number_of_books,
 					(SELECT DATEADD(DAY, 2, GETDATE())),
@@ -58,7 +66,11 @@ GO
 
 --select dbo.checkSalary(13)
 
-IF EXISTS(SELECT 1 FROM sys.objects WHERE TYPE='P' AND NAME = 'changePosition') DROP PROCEDURE changePosition
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'dbo.changePosition')
+                    AND type IN ( N'P', N'PC' ) )
+DROP PROCEDURE dbo.changePosition
 GO
 CREATE PROCEDURE changePosition(@employee_id INT, @position_id INT)
 AS
@@ -93,3 +105,121 @@ GO
 
 --SELECT * FROM Employees WHERE employee_id = 2
 --EXECUTE changePosition 2, 2
+
+IF EXISTS ( SELECT	1 
+			FROM	sys.objects 
+			WHERE	object_id = OBJECT_ID(N'dbo.checkWhoEarnTheMostInTheSamePosition')
+					AND type IN ( N'FN', N'IF', N'TF', N'FS', N'FT' ) )
+DROP FUNCTION dbo.checkWhoEarnTheMostInTheSamePosition
+GO
+CREATE FUNCTION checkWhoEarnTheMostInTheSamePosition(@position INT)
+RETURNS @employee_id_and_salary TABLE
+(
+	employee_id INT PRIMARY KEY,
+	salary SMALLMONEY
+)
+AS
+BEGIN
+	DECLARE @employee_id INT, @employee_id_with_max_salary SMALLMONEY, @max_salary SMALLMONEY, @employee_salary SMALLMONEY
+	SET @max_salary = 0
+	
+	DECLARE employees SCROLL CURSOR FOR
+	SELECT employee_id, salary FROM Employees
+
+	OPEN employees
+	FETCH NEXT FROM employees
+	INTO @employee_id, @employee_salary
+
+	WHILE @@FETCH_STATUS=0
+	BEGIN
+		IF (@max_salary < @employee_salary)
+		BEGIN
+			SET @max_salary = @employee_salary
+			SET @employee_id_with_max_salary = @employee_id 
+		END
+		FETCH NEXT FROM employees INTO @employee_id, @employee_salary 
+	END
+	CLOSE employees
+	DEALLOCATE employees
+	INSERT @employee_id_and_salary
+	SELECT @employee_id_with_max_salary, @max_salary
+	RETURN
+END
+GO
+
+--SELECT * FROM dbo.checkWhoEarnTheMostInTheSamePosition(1)
+--SELECT * FROM Employees WHERE position = 1
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------
+use db_RMSBD
+CREATE FUNCTION checkIfAllDepartmentHaveDirector()
+RETURNS BIT
+AS BEGIN
+	DECLARE @response BIT, @department_id INT
+	DECLARE departments SCROLL CURSOR FOR
+	SELECT department_id FROM Department
+
+	OPEN departments
+	FETCH NEXT FROM departments
+	INTO @department_id
+
+	WHILE @@FETCH_STATUS=0
+	BEGIN
+	IF((SELECT director FROM Department WHERE department_id = @department_id) = NULL)
+	BEGIN
+		SET @response = 0
+		RETURN @response
+	END
+	ELSE
+	BEGIN
+		SET @response = 1
+	END
+	FETCH NEXT FROM departments INTO @department_id
+	END
+	CLOSE departments
+	DEALLOCATE departments
+	RETURN @response
+END
+
+CREATE FUNCTION printWhichBookWasNotDelivered(@book INT)
+RETURNS VARCHAR 
+AS BEGIN
+	DECLARE @response VARCHAR(200), @book_id INT, @book_name VARCHAR(20)
+	SET @response = ''
+	DECLARE books SCROLL CURSOR FOR
+	SELECT book FROM BooksDelivery 
+	WHERE delivery_date < GETDATE()
+
+	OPEN books
+	FETCH NEXT FROM books
+	INTO @book_id
+
+	WHILE @@FETCH_STATUS=0
+	BEGIN
+		--SET @response = @response + CAST(@book_id AS VARCHAR(2)) + ','
+		SET @response = @book_id
+
+		--RETURN @book_id
+		--PRINT 'id of book ' + CAST(@book_id AS VARCHAR(10))
+		FETCH NEXT FROM books INTO @book_id
+	END
+	CLOSE books
+	DEALLOCATE books
+	RETURN @response
+END
+GO
+
+
+SELECT dbo.printWhichBookWasNotDelivered(1)
+
+SELECT dbo.checkIfBookWasDelivered(2)
+
+SELECT book FROM BooksDelivery WHERE delivery_date < GETDATE()
