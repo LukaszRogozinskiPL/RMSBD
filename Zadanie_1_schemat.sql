@@ -67,7 +67,7 @@ GO
 --książki--
 CREATE TABLE Books
 (
-	book_id INT PRIMARY KEY,
+	book_id INT IDENTITY(1,1) PRIMARY KEY,
 	quantity INT NOT NULL,
 	name VARCHAR(20) NOT NULL,
 	author VARCHAR(100) NOT NULL,

@@ -46,7 +46,7 @@ BEGIN
 				INSERT INTO BooksDelivery(quantity, delivery_date, price, book, department) -- mozliwy do dodania trigger ktory sprawdzi date delivery_date i o tej porze doda odpowiednia krotke do tabeli books
 				VALUES(
 					@number_of_books,
-					(SELECT DATEADD(DAY, 2, GETDATE())),
+					(SELECT DATEADD(SECOND, 20, GETDATE())),
 					(SELECT BookCategory.price FROM BookCategory WHERE BookCategory.book_category_id IN (SELECT book_category FROM Books WHERE book_id = @book)) * @number_of_books,
 					@book,
 					@receiver
@@ -146,80 +146,121 @@ BEGIN
 	RETURN
 END
 GO
-
 --SELECT * FROM dbo.checkWhoEarnTheMostInTheSamePosition(1)
 --SELECT * FROM Employees WHERE position = 1
 
-
-
-
-
-
-
-
-
--------------------------------------------------------------------------------
-use db_RMSBD
-CREATE FUNCTION checkIfAllDepartmentHaveDirector()
-RETURNS BIT
-AS BEGIN
-	DECLARE @response BIT, @department_id INT
-	DECLARE departments SCROLL CURSOR FOR
-	SELECT department_id FROM Department
-
-	OPEN departments
-	FETCH NEXT FROM departments
-	INTO @department_id
-
-	WHILE @@FETCH_STATUS=0
+IF EXISTS ( SELECT  *
+            FROM    sys.objects
+            WHERE   object_id = OBJECT_ID(N'dbo.changeSuperiorOfEmployee')
+                    AND type IN ( N'P', N'PC' ) )
+DROP PROCEDURE dbo.changeSuperiorOfEmployee
+GO
+CREATE PROCEDURE changeSuperiorOfEmployee(@employee INT, @new_superior INT)
+AS
+BEGIN
+	DECLARE @current_superior INT
+	SET @current_superior = (SELECT superior_id FROM Employees WHERE employee_id = @employee)
+	IF (@current_superior = @new_superior)
 	BEGIN
-	IF((SELECT director FROM Department WHERE department_id = @department_id) = NULL)
+		THROW 60000, 'this employee already have superior with selected ID', 1
+	END
+	ELSE 
+	BEGIN
+		DECLARE @employee_department INT, @superior_department INT
+		SET @employee_department = (SELECT department FROM Employees WHERE employee_id = @employee)
+		SET @superior_department = (SELECT Department FROM Employees WHERE employee_id = @new_superior)
+		
+		IF((@employee_department != @superior_department))
+		BEGIN
+			THROW 60000, 'employee have to work in the same department as his superior', 1
+		END
+		ELSE
+		BEGIN
+			UPDATE Employees SET superior_id = @new_superior WHERE employee_id = @employee
+		END
+	END
+END
+GO
+INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, position, department) VALUES
+	(16, 'Marlena', 'Polewicz', 2500, 'Rabicka', '665', '6', 'Teodory', '92-612', 2, 1);
+	
+
+--SELECT * FROM Employees WHERE employee_id = 16
+--GO
+--EXECUTE changeSuperiorOfEmployee 16, 1
+--GO
+--SELECT * FROM Employees WHERE employee_id = 16
+--GO
+
+IF EXISTS ( SELECT	1 
+			FROM	sys.objects 
+			WHERE	object_id = OBJECT_ID(N'dbo.checkIfSuperiorOK')
+					AND type IN ( N'FN', N'IF', N'TF', N'FS', N'FT' ) )
+DROP FUNCTION dbo.checkIfSuperiorOK
+GO
+CREATE FUNCTION checkIfSuperiorOK(@employee INT)
+RETURNS BIT AS
+BEGIN
+	DECLARE @response BIT, @superior INT, @employee_department INT, @superior_department INT
+	
+	SET @superior = (SELECT superior_id FROM Employees WHERE employee_id = @employee)
+	SET @employee_department = (SELECT department FROM Employees WHERE employee_id = @employee)
+	SET @superior_department = (SELECT department FROM Employees WHERE employee_id = @superior)
+
+	IF(@superior_department != @employee_department)
 	BEGIN
 		SET @response = 0
-		RETURN @response
 	END
 	ELSE
 	BEGIN
 		SET @response = 1
 	END
-	FETCH NEXT FROM departments INTO @department_id
-	END
-	CLOSE departments
-	DEALLOCATE departments
-	RETURN @response
-END
-
-CREATE FUNCTION printWhichBookWasNotDelivered(@book INT)
-RETURNS VARCHAR 
-AS BEGIN
-	DECLARE @response VARCHAR(200), @book_id INT, @book_name VARCHAR(20)
-	SET @response = ''
-	DECLARE books SCROLL CURSOR FOR
-	SELECT book FROM BooksDelivery 
-	WHERE delivery_date < GETDATE()
-
-	OPEN books
-	FETCH NEXT FROM books
-	INTO @book_id
-
-	WHILE @@FETCH_STATUS=0
-	BEGIN
-		--SET @response = @response + CAST(@book_id AS VARCHAR(2)) + ','
-		SET @response = @book_id
-
-		--RETURN @book_id
-		--PRINT 'id of book ' + CAST(@book_id AS VARCHAR(10))
-		FETCH NEXT FROM books INTO @book_id
-	END
-	CLOSE books
-	DEALLOCATE books
 	RETURN @response
 END
 GO
 
+--SELECT dbo.checkIfSuperiorOK(4)
+--GO
 
-SELECT dbo.printWhichBookWasNotDelivered(1)
 
-SELECT dbo.checkIfBookWasDelivered(2)
+IF EXISTS ( SELECT * 
+			FROM sys.triggers
+			WHERE object_id = OBJECT_ID(N'dbo.bookDeliveryTrigger'))
+DROP TRIGGER dbo.bookDeliveryTrigger
+GO
+CREATE TRIGGER bookDeliveryTrigger ON BooksDelivery
+AFTER INSERT AS
+BEGIN
+	DECLARE @delay DATETIME
+	SET @delay = DATEDIFF(SECOND, GETDATE(), (SELECT delivery_date FROM inserted))
+	--SET @delay = '00:00:02'
+	WAITFOR DELAY @delay
+	BEGIN
+		DECLARE @book_name VARCHAR(20), @book_author VARCHAR(20), @book_category INT, @inserted_book_department INT, @inserted_book_id INT, @inserted_book_quantity INT, @existing_book_id_in_selected_department INT
+		
+		SET @inserted_book_id = (SELECT book FROM inserted)
+		SET @book_name = (SELECT name FROM Books WHERE book_id = @inserted_book_id)
+		SET @book_author = (SELECT author FROM Books WHERE book_id = @inserted_book_id)
+		SET @book_category = (SELECT book_category FROM Books WHERE book_id = @inserted_book_id)
+		SET @inserted_book_department = (SELECT department FROM inserted)
+		SET @inserted_book_quantity = (SELECT quantity FROM inserted)
 
-SELECT book FROM BooksDelivery WHERE delivery_date < GETDATE()
+		SET @existing_book_id_in_selected_department = (SELECT book_id FROM Books WHERE department = @inserted_book_department AND name = @book_name)
+		SELECT @existing_book_id_in_selected_department AS beforeIf
+		IF (@existing_book_id_in_selected_department IS NOT NULL)
+		BEGIN
+			UPDATE Books SET quantity = quantity + @inserted_book_quantity WHERE book_id = @existing_book_id_in_selected_department
+		END
+		ELSE
+		BEGIN
+			INSERT INTO Books VALUES(@inserted_book_quantity , @book_name, @book_author, @book_category, @inserted_book_department)
+		END
+		UPDATE Books SET quantity = quantity - @inserted_book_quantity WHERE book_id = @inserted_book_id
+	END
+END
+GO
+
+--SELECT * FROM Books
+--SELECT * FROM BooksDelivery
+
+--INSERT INTO BooksDelivery VALUES(3, 'dostawa ksiazki', '2019-10-11 12:35:00', 50,  2, 1)
