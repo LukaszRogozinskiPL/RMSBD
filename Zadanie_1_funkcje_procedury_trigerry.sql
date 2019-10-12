@@ -1,16 +1,17 @@
+USE db_RMSBD
 IF EXISTS ( SELECT	1 
 			FROM	sys.objects 
 			WHERE	object_id = OBJECT_ID(N'dbo.checkSalary')
 					AND type IN ( N'FN', N'IF', N'TF', N'FS', N'FT' ) )
 DROP FUNCTION dbo.checkSalary
 GO
-CREATE FUNCTION checkSalary(@id INT)
+CREATE FUNCTION checkSalary(@employee_id INT)
 RETURNS BIT AS
 BEGIN
-	DECLARE @isTheRightAmmout BIT, @salary SMALLMONEY,  @position INT
+	DECLARE @isTheRightAmmout BIT, @salary SMALLMONEY, @position INT
 	SELECT @salary = salary, @position = position
 	FROM Employees
-	WHERE employee_id =@id
+	WHERE employee_id = @employee_id
 	IF (@salary >= ANY(SELECT min_salary
 	FROM Positions WHERE position_id = @position)
 	AND @salary <= ANY(SELECT max_salary
@@ -22,7 +23,10 @@ BEGIN
 END
 GO
 
---SELECT dbo.checkSalary(2)
+
+--SELECT * FROM Employees
+--SELECT dbo.checkSalary(1) AS isSalaryOK
+--SELECT dbo.checkSalary(3) AS isSalaryOK
 
 IF EXISTS ( SELECT  *
             FROM    sys.objects
@@ -46,13 +50,12 @@ BEGIN
 				INSERT INTO BooksDelivery(quantity, delivery_date, price, book, department) -- mozliwy do dodania trigger ktory sprawdzi date delivery_date i o tej porze doda odpowiednia krotke do tabeli books
 				VALUES(
 					@number_of_books,
-					(SELECT DATEADD(SECOND, 20, GETDATE())),
+					(SELECT DATEADD(SECOND, 5, GETDATE())),
 					(SELECT BookCategory.price FROM BookCategory WHERE BookCategory.book_category_id IN (SELECT book_category FROM Books WHERE book_id = @book)) * @number_of_books,
 					@book,
 					@receiver
 				)
 				UPDATE Books SET quantity = quantity - @number_of_books WHERE book_id = @book
-				PRINT 'succesfully ordered book deliver to library number ' + CAST(@receiver AS VARCHAR(2))
 			END
 	END
 	ELSE 
@@ -62,9 +65,35 @@ BEGIN
 END
 GO
 
---EXECUTE orderBookDelivery 2, 1, 14, 5
+--not warehouse
+BEGIN TRY
+	EXECUTE orderBookDelivery 2, 1, 14, 99
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
 
---select dbo.checkSalary(13)
+--not  enough books
+BEGIN TRY
+	EXECUTE orderBookDelivery 3, 1, 14, 99
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
+SELECT * FROM BooksDelivery
+SELECT * FROM Books WHERE name = 'Król'
+
+BEGIN TRY
+	EXECUTE orderBookDelivery 3, 2, 14, 2
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
+SELECT * FROM BooksDelivery
+SELECT * FROM Books WHERE name = 'Król'
+
 
 IF EXISTS ( SELECT  *
             FROM    sys.objects
@@ -103,8 +132,22 @@ BEGIN
 END
 GO
 
---SELECT * FROM Employees WHERE employee_id = 2
---EXECUTE changePosition 2, 2
+--error
+BEGIN TRY
+	EXECUTE changePosition 2, 1
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
+--success
+BEGIN TRY
+	EXECUTE changePosition 2, 1
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
 
 IF EXISTS ( SELECT	1 
 			FROM	sys.objects 
@@ -124,7 +167,7 @@ BEGIN
 	SET @max_salary = 0
 	
 	DECLARE employees SCROLL CURSOR FOR
-	SELECT employee_id, salary FROM Employees
+	SELECT employee_id, salary FROM Employees WHERE position = @position
 
 	OPEN employees
 	FETCH NEXT FROM employees
@@ -146,8 +189,8 @@ BEGIN
 	RETURN
 END
 GO
---SELECT * FROM dbo.checkWhoEarnTheMostInTheSamePosition(1)
---SELECT * FROM Employees WHERE position = 1
+SELECT * FROM dbo.checkWhoEarnTheMostInTheSamePosition(2)
+SELECT * FROM Employees WHERE position = 2
 
 IF EXISTS ( SELECT  *
             FROM    sys.objects
@@ -181,16 +224,36 @@ BEGIN
 	END
 END
 GO
-INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, position, department) VALUES
-	(16, 'Marlena', 'Polewicz', 2500, 'Rabicka', '665', '6', 'Teodory', '92-612', 2, 1);
-	
 
---SELECT * FROM Employees WHERE employee_id = 16
---GO
---EXECUTE changeSuperiorOfEmployee 16, 1
---GO
---SELECT * FROM Employees WHERE employee_id = 16
---GO
+
+--same id
+BEGIN TRY
+	EXECUTE changeSuperiorOfEmployee 4, 1
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+select * from Employees
+
+--different department
+BEGIN TRY
+	EXECUTE changeSuperiorOfEmployee 4, 2
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
+
+INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, superior_id, position, department) VALUES
+	(16, 'Marlena', 'Polewicz', 2500,3, 2, 1);
+
+BEGIN TRY
+	EXECUTE changeSuperiorOfEmployee 16, 1
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
 
 IF EXISTS ( SELECT	1 
 			FROM	sys.objects 
@@ -219,8 +282,8 @@ BEGIN
 END
 GO
 
---SELECT dbo.checkIfSuperiorOK(4)
---GO
+SELECT dbo.checkIfSuperiorOK(16) AS isSuperiorOK
+GO
 
 
 IF EXISTS ( SELECT * 
@@ -246,7 +309,6 @@ BEGIN
 		SET @inserted_book_quantity = (SELECT quantity FROM inserted)
 
 		SET @existing_book_id_in_selected_department = (SELECT book_id FROM Books WHERE department = @inserted_book_department AND name = @book_name)
-		SELECT @existing_book_id_in_selected_department AS beforeIf
 		IF (@existing_book_id_in_selected_department IS NOT NULL)
 		BEGIN
 			UPDATE Books SET quantity = quantity + @inserted_book_quantity WHERE book_id = @existing_book_id_in_selected_department
@@ -255,12 +317,79 @@ BEGIN
 		BEGIN
 			INSERT INTO Books VALUES(@inserted_book_quantity , @book_name, @book_author, @book_category, @inserted_book_department)
 		END
-		UPDATE Books SET quantity = quantity - @inserted_book_quantity WHERE book_id = @inserted_book_id
 	END
 END
 GO
 
---SELECT * FROM Books
---SELECT * FROM BooksDelivery
+--trigger wywolywany przy orderbookDelivery
 
---INSERT INTO BooksDelivery VALUES(3, 'dostawa ksiazki', '2019-10-11 12:35:00', 50,  2, 1)
+
+IF EXISTS ( SELECT * 
+			FROM sys.triggers
+			WHERE object_id = OBJECT_ID(N'dbo.updateSalaryHistory'))
+DROP TRIGGER dbo.updateSalaryHistory
+GO
+CREATE TRIGGER updateSalaryHistory ON Employees
+AFTER UPDATE AS
+BEGIN
+	IF UPDATE (salary)
+	BEGIN
+		DECLARE @salary SMALLMONEY, @employee_id INT
+		SET @salary = (SELECT salary FROM inserted)
+		SET @employee_id = (SELECT employee_id FROM inserted)
+		INSERT INTO SalaryHistory VALUES (@salary, GETDATE(), @employee_id)
+	END
+END
+
+--wywolane przy changePosition
+
+IF EXISTS ( SELECT * 
+			FROM sys.triggers
+			WHERE object_id = OBJECT_ID(N'dbo.deleteEmployee'))
+DROP TRIGGER dbo.deleteEmployee
+GO
+CREATE TRIGGER deleteEmployee ON Employees
+INSTEAD OF DELETE AS
+BEGIN
+	DECLARE @employee INT, @manager_id INT, @employee_position INT
+	SET @employee = (SELECT employee_id FROM deleted)
+	SET @manager_id = (SELECT position_id FROM Positions WHERE name = 'Dyrektor')
+	SET @employee_position = (SELECT position from deleted)
+	IF (@employee_position = @manager_id)
+	BEGIN
+		DECLARE @department_of_deleted_employee INT, @another_manager INT
+		SET @department_of_deleted_employee = (SELECT department FROM deleted)
+		SET @another_manager = (SELECT employee_id FROM Employees WHERE department = @department_of_deleted_employee AND position = @employee_position AND employee_id != @employee)
+		IF(@another_manager IS NOT NULL)
+		BEGIN
+			UPDATE Department SET manager = @another_manager WHERE department_id = @department_of_deleted_employee
+			UPDATE Employees SET superior_id = @another_manager WHERE superior_id = @employee
+			DELETE FROM Employees WHERE employee_id = @employee
+		END
+		ELSE
+		BEGIN
+			THROW 60000, 'Cannot delete this manager because there have to be at least one manager in department', 1
+		END
+	END
+	ELSE
+	BEGIN
+		DELETE FROM Employees WHERE employee_id = @employee
+	END
+END
+BEGIN TRY
+	DELETE FROM Employees WHERE employee_id = 1
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+
+INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, position, department) VALUES
+	(17, 'Jakub', 'Trębacz', 9999, 1, 1);
+
+BEGIN TRY
+	DELETE FROM Employees WHERE employee_id = 1
+END TRY
+BEGIN CATCH
+	SELECT ERROR_MESSAGE() AS Error
+END CATCH
+SELECT * FROM Employees

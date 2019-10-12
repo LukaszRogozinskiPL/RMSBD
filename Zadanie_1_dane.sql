@@ -7,33 +7,53 @@ INSERT INTO Positions VALUES
 	(3, 'Dostawca', 3000, 5000),
 	(4, 'Ochroniaż', 2500, 4500);
 
-INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, position, department) VALUES
-	(1, 'Marcin', 'Wachulski', 5200, 'Piotrkowska', '210', '18', 'Gliwice', '94-021', 1, 1),
-	(2, 'Jacek', 'Gierewicz', 6200, 'Aleksandrowska', '125', '12', 'Poznan', '93-351', 1, 2),
-	(3, 'Tomasz', 'Kuc', 7000, 'Pojezierska', '42', '18', 'Sieradz', '91-416', 1, 3);
+--INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, position, department) VALUES
+--	(1, 'Marcin', 'Wachulski', 5200, 'Piotrkowska', '210', '18', 'Gliwice', '94-021', 1, 1),
+--	(2, 'Jacek', 'Gierewicz', 6200, 'Aleksandrowska', '125', '12', 'Poznan', '93-351', 1, 2),
+--	(3, 'Tomasz', 'Kuc', 7000, 'Pojezierska', '42', '18', 'Sieradz', '91-416', 1, 3);
 
-INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, superior_id, position, department) VALUES
-	(4, 'Marlena', 'Polewicz', 2500, 'Rabicka', '665', '6', 'Teodory', '92-612', 1, 2, 1),
-	(5, 'Karina', 'Andrzejewicz', 2300, 'Krotka', '90', '8', 'Warszawa', '97-203', 1, 2, 1),
-	(6, 'Patrycja', 'Bis', 2600, 'Opolska', '210', '15', 'Aleksandrow Lodzki', '97-614', 3, 2, 3),
-	(7, 'Franciszek', 'Major', 2800, 'Maratonska', '777', '10', 'Sieradz', '93-456', 3, 2, 3),
-	(8, 'Piotr', 'Zedryk', 2100, 'Boniec', '729', '9', 'Warszawa', '94-080', 3, 2, 3),
-	(9, 'Bartosz', 'Dolic', 2100, 'Radwanska', '121', '6', 'Opole', '98-603', 2, 2, 2),
-	(10, 'Elmund', 'Telarid', 3100, 'Durden', '91', '2', 'Zakopane', '96-710', 3, 3, 3),
-	(11, 'Karolina', 'Jamnik', 3200, 'Lipiec', '62', '29', 'Mosin', '90-765', 3, 3, 3),
-	(12, 'Sebastian', 'Irys', 2550, 'Warszawska', '164', '84', 'Lepody', '93-123', 1, 4, 1),
-	(13, 'Bogdan', 'Popel', 5500, 'Konieczna', '75', '73', 'Rusiec', '96-925', 2, 4, 2),
-	(14, 'Katarzyna', 'Silna', 3300, 'Smutna', '36', '42', 'Gliwice', '99-821', 3, 4, 3),
-	(15, 'Hanna', 'Widawka', 2600, 'Wesola', '352', '12', 'Torun', '99-951', 3, 4, 3);
+--INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, street, house_nr, flat_nr, city, zip_code, superior_id, position, department) VALUES
+--	(4, 'Marlena', 'Polewicz', 2500, 'Rabicka', '665', '6', 'Teodory', '92-612', 1, 2, 1),
+--	(5, 'Karina', 'Andrzejewicz', 2300, 'Krotka', '90', '8', 'Warszawa', '97-203', 1, 2, 1),
+--	(6, 'Patrycja', 'Bis', 2600, 'Opolska', '210', '15', 'Aleksandrow Lodzki', '97-614', 3, 2, 3),
+--	(7, 'Franciszek', 'Major', 2800, 'Maratonska', '777', '10', 'Sieradz', '93-456', 3, 2, 3),
+--	(8, 'Piotr', 'Zedryk', 2100, 'Boniec', '729', '9', 'Warszawa', '94-080', 3, 2, 3),
+--	(9, 'Bartosz', 'Dolic', 2100, 'Radwanska', '121', '6', 'Opole', '98-603', 2, 2, 2),
+--	(10, 'Elmund', 'Telarid', 3100, 'Durden', '91', '2', 'Zakopane', '96-710', 3, 3, 3),
+--	(11, 'Karolina', 'Jamnik', 3200, 'Lipiec', '62', '29', 'Mosin', '90-765', 3, 3, 3),
+--	(12, 'Sebastian', 'Irys', 2550, 'Warszawska', '164', '84', 'Lepody', '93-123', 1, 4, 1),
+--	(13, 'Bogdan', 'Popel', 5500, 'Konieczna', '75', '73', 'Rusiec', '96-925', 2, 4, 2),
+--	(14, 'Katarzyna', 'Silna', 3300, 'Smutna', '36', '42', 'Gliwice', '99-821', 3, 4, 3),
+--	(15, 'Hanna', 'Widawka', 2600, 'Wesola', '352', '12', 'Torun', '99-951', 3, 4, 3);
+
+INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, position, department) VALUES
+	(1, 'Marcin', 'Wachulski', 5200, 1, 1),
+	(2, 'Jacek', 'Gierewicz', 6200, 1, 2),
+	(3, 'Tomasz', 'Kuc', 9999, 1, 3);
+
+INSERT INTO Employees(employee_id, employee_name, employee_surname, salary, superior_id, position, department) VALUES
+	(4, 'Marlena', 'Polewicz', 2500, 1, 2, 1),
+	(5, 'Karina', 'Andrzejewicz', 2300, 1, 2, 1),
+	(6, 'Patrycja', 'Bis', 2600, 3, 2, 3),
+	(7, 'Franciszek', 'Major', 2800, 3, 2, 3),
+	(8, 'Piotr', 'Zedryk', 2100, 3, 2, 3),
+	(9, 'Bartosz', 'Dolic', 2100, 2, 2, 2),
+	(10, 'Elmund', 'Telarid', 3100, 3, 3, 3),
+	(11, 'Karolina', 'Jamnik', 3200, 3, 3, 3),
+	(12, 'Sebastian', 'Irys', 2550, 1, 4, 1),
+	(13, 'Bogdan', 'Popel', 5500, 2, 4, 2),
+	(14, 'Katarzyna', 'Silna', 3300, 3, 4, 3),
+	(15, 'Hanna', 'Widawka', 2600, 3, 4, 3);
+
 
 INSERT INTO DepartmentCategory VALUES
 	(1, 'Magazyn'),
 	(2, 'Biblioteka');
 
 INSERT INTO Department VALUES
-	(1, 'Biblioteka Publiczna im. Wladyslawa Matejki', 1, 2),
+	(1, 'Biblioteka Publiczna im. Wladyslawa Matejki', 2, 1),
 	(2, 'Biblioteka Niepubliczna im. Ernesta Hemingwaya', 2, 2),
-	(3, 'Magazyn ksiazek im. Jana Przechowywacza', 3, 1);
+	(3, 'Magazyn ksiazek im. Jana Przechowywacza', 1, 3);
 
 INSERT INTO BookCategory VALUES
 	(1, 'fantastyka', 15),

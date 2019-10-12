@@ -4,7 +4,7 @@ GO
 CREATE TABLE Positions
 (
 	position_id INT PRIMARY KEY,
-	name VARCHAR(50) NOT NULL,
+	name VARCHAR(50) NOT NULL UNIQUE,
 	min_salary SMALLMONEY,
 	max_salary SMALLMONEY
 )
@@ -17,11 +17,11 @@ CREATE TABLE Employees
 	employee_name VARCHAR(20) NOT NULL,
 	employee_surname VARCHAR(40) NOT NULL,
 	salary SMALLMONEY NOT NULL,
-	street VARCHAR(60) NOT NULL,
-	house_nr INT NOT NULL,
-	flat_nr INT,
-	city VARCHAR(20) NOT NULL,
-	zip_code VARCHAR(20) NOT NULL,
+	--street VARCHAR(60) NOT NULL,
+	--house_nr INT NOT NULL,
+	--flat_nr INT,
+	--city VARCHAR(20) NOT NULL,
+	--zip_code VARCHAR(20) NOT NULL,
 	superior_id INT,
 	position INT NOT NULL,
 	department INT NOT NULL,
@@ -47,10 +47,10 @@ CREATE TABLE Department
 (
 	department_id INT PRIMARY KEY,
 	department_name VARCHAR(50),
-	director INT NOT NULL,
 	category INT NOT NULL,
-	CONSTRAINT FK_department_director
-	FOREIGN KEY(director) REFERENCES Employees(employee_id),
+	manager INT NOT NULL,
+	CONSTRAINT FK_department_manager
+	FOREIGN KEY(manager) REFERENCES Employees(employee_id),
 	CONSTRAINT FK_department_departmentCategory
 	FOREIGN KEY(category) REFERENCES DepartmentCategory(department_category_id)
 )
